@@ -4,11 +4,11 @@ import os, strformat, sets, strutils
 
 version = "0.1.0"
 author = "brian houston morrow"
-description = "advent of code 2022"
+description = "advent of code 2023"
 license = "MIT"
 binDir = "bin"
 
-requires("nim >= 1.6.10")
+requires("nim >= 2.0.0")
 
 var params = commandLineParams().toHashSet()
 
