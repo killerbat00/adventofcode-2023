@@ -3,6 +3,8 @@ from streams import lines
 from std/strutils import startsWith, split, parseInt
 from std/sequtils import map, minmax
 import sugar
+import system
+import threadpool
 
 const TEST_DATA = """
 seeds: 79 14 55 13
@@ -47,15 +49,12 @@ type
         length: int
 
 proc srcNumInRange(r: Range, srcNum: int): bool =
-    if srcNum < r.srcStart:
-        return false
-    elif srcNum >= r.srcStart + r.length:
+    if srcNum < r.srcStart or srcNum >= r.srcStart + r.length:
         return false
     return true
 
 proc srcNumToDestNum(r: Range, srcNum: int): int =
-    let destOffset = srcNum - r.srcStart
-    return r.destStart + destOffset
+    return r.destStart + (srcNum - r.srcStart)
 
 proc translateSrcNum(map: seq[Range], srcNum: int): int =
     for r in map:
@@ -66,11 +65,14 @@ proc translateSrcNum(map: seq[Range], srcNum: int): int =
 proc translateSeedToLocation(seed: int, maps: seq[seq[Range]]): int =
     var
         srcNum = seed
-        destNum = -1
     for map in maps:
-        destNum = translateSrcNum(map, srcNum)
-        srcNum = destNum
-    return destNum
+        srcNum = translateSrcNum(map, srcNum)
+    return srcNum
+
+proc lowestLocInRange(seedStart: int, seedLen: int, maps: seq[seq[Range]]): int =
+    result = translateSeedToLocation(seedStart, maps)
+    for seed in seedStart+1..seedStart+seedLen:
+        result = min(result, translateSeedToLocation(seed, maps))
 
 proc partOne() =
     let fn = "./input/day_5.txt"
@@ -194,8 +196,8 @@ proc partOne() =
     echo "Part one: ", minmax(locations)[0]
 
 proc partTwo() =
-    #let fn = "./input/day_5.txt"
-    let fn = TEST_DATA
+    let fn = "./input/day_5.txt"
+    #let fn = TEST_DATA
 
     var seedsAndMap = newSeq[string]()
 
@@ -206,7 +208,6 @@ proc partTwo() =
     let numLines = seedsAndMap.len
     var
         i = 0
-        initialSeeds = newSeq[int]()
         seeds = newSeq[int]()
         seedToSoil = newSeq[Range]()
         soilToFert = newSeq[Range]()
@@ -218,12 +219,7 @@ proc partTwo() =
 
     while i < numLines:
         if i == 0:
-            initialSeeds = seedsAndMap[i].split(": ")[1].split(" ").map(parseInt)
-            let numSeeds = initialSeeds.len
-            var i = 0
-            while i < numSeeds:
-                for j in initialSeeds[i]..initialSeeds[i+1]:
-                    seeds.add(j)
+            seeds = seedsAndMap[i].split(": ")[1].split(" ").map(parseInt)
             i += 1
             continue
         if seedsAndMap[i] == "":
@@ -314,10 +310,19 @@ proc partTwo() =
                 i += 1
             continue
 
-    var locations = newSeq[int]()
-    for seed in seeds:
-        let location = translateSeedToLocation(seed, @[seedToSoil, soilToFert, fertToWater, waterToLight, lightToTemp, tempToHumid, humidToLoc])
-        locations.add(location)
+    var 
+        flowVars: seq[FlowVar[int]]
+        j = 0
+        locations = newSeq[int]()
+
+    #2m55.438s
+    while j < seeds.len:
+        flowVars.add(spawn lowestLocInRange(seeds[j], seeds[j+1], @[seedToSoil, soilToFert, fertToWater, waterToLight, lightToTemp, tempToHumid, humidToLoc]))
+        j += 2
+    sync()
+    for f in flowVars:
+        locations.add(^f)
+
     echo "Part two: ", minmax(locations)[0]
 
 when isMainModule:
