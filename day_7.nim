@@ -105,7 +105,7 @@ proc cmpHandTwo(a: string, b: string, aOrig: string, bOrig: string): int =
         for i in 0..a.len-1:
             if partTwoRanks.find(aOrig[i]) > partTwoRanks.find(bOrig[i]):
                 return -1
-            else:
+            elif partTwoRanks.find(aOrig[i]) < partTwoRanks.find(bOrig[i]):
                 return 1
 
 proc cmpTwoRanks(a: char, b: char): int =
@@ -164,7 +164,7 @@ proc maximizeHand(a: string): string =
         let options = ht.keys().toSeq().filter(x => x != 'J')
         if (options.len == 1):
             return a.replace('J', options[0])
-        if partTwoRanks.find(options[0]) > partTwoRanks.find(options[1]):
+        if partTwoRanks.find(options[0]) < partTwoRanks.find(options[1]):
             return a.replace('J', options[0])
         else:
             return a.replace('J', options[1])
@@ -177,13 +177,6 @@ proc maximizeHand(a: string): string =
 
 
 proc partTwo() =
-    # same as part 1 but with jokers
-    # joker means:
-    #  count number of jokers
-    #  replace with highest scoring card w/ most duplicates/count in hand
-    # score hand
-    # use partTwoRanks
-    
     let fn = "./input/day_7.txt"
     #let fn = TEST_DATA
     var handsAndBids = newSeq[(string, string, int)]()
@@ -205,5 +198,5 @@ proc partTwo() =
     echo "Part two: ", totalWinnings
 
 when isMainModule:
-    #partOne()
+    partOne()
     partTwo()
