@@ -1,6 +1,10 @@
 from utils import withStream
 from streams import lines
 
+import strutils
+import sequtils
+import sugar
+
 proc partOne() =
     let fn = "./input/day_X.txt"
 
