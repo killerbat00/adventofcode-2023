@@ -3,6 +3,7 @@ from streams import lines
 import sequtils
 import strutils
 import sugar
+import algorithm
 
 const TEST_INPUT = """
 ..F7.
@@ -26,6 +27,18 @@ const TEST_INPUT_3 = """
 SJLL7
 |F--J
 LJ.LJ
+"""
+
+const TEST_INPUT_4 = """
+...........
+.S-------7.
+.|F-----7|.
+.||.....||.
+.||.....||.
+.|L-7.F-J|.
+.|..|.|..|.
+.L--J.L--J.
+...........
 """
 
 type
@@ -168,15 +181,122 @@ proc partOne() =
 
     echo "Part one: ", path.len / 2
 
+# :(
+#proc tileEnclosed(curPos: Point, map: seq[seq[char]], path: seq[Point]): bool =
+#    var
+#        pathLeft = false
+#        pathRight = false
+#        pathUp = false
+#        pathDown = false
+#    
+#    if curPos in path:
+#        return false
+#
+#    # check left
+#    for newX in countDown(curPos.x-1, 0):
+#        let p = Point(y: curPos.y, x: newX)
+#        if p in path:
+#            pathLeft = true
+#            break
+#    if not pathLeft:
+#        return false
+#
+#    # check right
+#    for newX in countUp(curPos.x+1, map[0].len-1):
+#        let p = Point(y: curPos.y, x: newX)
+#        if p in path:
+#            pathRight = true
+#            break
+#    if not pathRight:
+#        return false
+#
+#    # check up
+#    for newY in countDown(curPos.y-1, 0):
+#        let p = Point(y: newY, x: curPos.x)
+#        if p in path:
+#            pathUp = true
+#            break
+#    if not pathUp:
+#        return false
+#
+#    # check down
+#    for newY in countUp(curPos.y+1, map.len-1):
+#        let p = Point(y: newY, x: curPos.x)
+#        if p in path:
+#            pathDown = true
+#            break
+#    if not pathDown:
+#        return false
+#
+#    return true
+
+type
+    Matrix = object
+        x, y, w, z: int
+
+proc mult(a: Matrix): int =
+    return a.x * a.z - a.y * a.w
+
+proc `$`(m: Matrix): string =
+    return "[" & $m.x & ", " & $m.y & ", " & $m.w & ", " & $m.z & "]"
+
+proc shoelace(path: seq[Point]): int =
+    # https://en.wikipedia.org/wiki/Shoelace_formula
+    # area of a polygon
+
+    var m = newSeq[Matrix](0)
+    var sum = 0
+
+    for i in 0..path.len-1:
+        let 
+            a = path[i]
+            b = path[(i+1) mod path.len]
+        m.add(Matrix(x: a.x, y: a.y, w: b.x, z: b.y))
+
+    for p in m:
+        sum += mult(p)
+    return int(sum / 2)
 
 proc partTwo() =
     let fn = "./input/day_10.txt"
+    #let fn = TEST_INPUT
+    #let fn = TEST_INPUT_2
+    #let fn = TEST_INPUT_3
+    #let fn = TEST_INPUT_4
+
+    var
+        map = newSeq[seq[char]]()
+        startPoint: Point
 
     withStream(f, fn, fmRead):
         for line in lines(f):
-            echo line
-    echo "Part two: "
+            if line.len > 0:
+                var lineSeq = newSeq[char]()
+                for c in line:
+                    if c == 'S':
+                        startPoint = Point(y: map.len, x: line.find(c))
+                    lineSeq.add(c)
+                map.add(lineSeq)
+
+    var
+        beginningSteps = getNextSteps(startPoint, map, @[])
+        curStep = beginningSteps[0]
+        path: seq[Point] = @[startPoint]
+        numSteps = 0
+
+    while true:
+        let nextStep = getNextSteps(curStep, map, path)
+
+        path.add(curStep)
+        if nextStep.len == 0:
+            break
+        curStep = nextStep[0]
+
+    var pathArea = shoelace(path.reversed)
+    # Pick's theorem https://en.wikipedia.org/wiki/Pick%27s_theorem
+    # number of contained points = area - boundary points / 2 + 1
+    echo "Part two: ", pathArea - int(path.len / 2) + 1
 
 when isMainModule:
-    partOne()
-    #partTwo()
+    #partOne()
+    partTwo()
