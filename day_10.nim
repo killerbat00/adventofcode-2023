@@ -181,64 +181,12 @@ proc partOne() =
 
     echo "Part one: ", path.len / 2
 
-# :(
-#proc tileEnclosed(curPos: Point, map: seq[seq[char]], path: seq[Point]): bool =
-#    var
-#        pathLeft = false
-#        pathRight = false
-#        pathUp = false
-#        pathDown = false
-#    
-#    if curPos in path:
-#        return false
-#
-#    # check left
-#    for newX in countDown(curPos.x-1, 0):
-#        let p = Point(y: curPos.y, x: newX)
-#        if p in path:
-#            pathLeft = true
-#            break
-#    if not pathLeft:
-#        return false
-#
-#    # check right
-#    for newX in countUp(curPos.x+1, map[0].len-1):
-#        let p = Point(y: curPos.y, x: newX)
-#        if p in path:
-#            pathRight = true
-#            break
-#    if not pathRight:
-#        return false
-#
-#    # check up
-#    for newY in countDown(curPos.y-1, 0):
-#        let p = Point(y: newY, x: curPos.x)
-#        if p in path:
-#            pathUp = true
-#            break
-#    if not pathUp:
-#        return false
-#
-#    # check down
-#    for newY in countUp(curPos.y+1, map.len-1):
-#        let p = Point(y: newY, x: curPos.x)
-#        if p in path:
-#            pathDown = true
-#            break
-#    if not pathDown:
-#        return false
-#
-#    return true
-
 type
     Matrix = object
         x, y, w, z: int
 
 proc mult(a: Matrix): int =
     return a.x * a.z - a.y * a.w
-
-proc `$`(m: Matrix): string =
-    return "[" & $m.x & ", " & $m.y & ", " & $m.w & ", " & $m.z & "]"
 
 proc shoelace(path: seq[Point]): int =
     # https://en.wikipedia.org/wiki/Shoelace_formula
