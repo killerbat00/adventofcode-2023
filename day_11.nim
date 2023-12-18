@@ -28,17 +28,23 @@ proc insertCol(map: var seq[seq[char]], col: int) =
     for _, row in map.mpairs:
         row.insert('.', col)
 
+proc isEmptyRow(map: seq[seq[char]], row: int): bool =
+    return map[row].allIt(it == '.')
+
+proc isEmptyCol(map: seq[seq[char]], col: int): bool =
+    return map.allIt(it[col] == '.')
+
 proc findEmptyRowsCols(map: seq[seq[char]]): (seq[int], seq[int]) =
     var emptyRows = newSeq[int]()
     var emptyCols = newSeq[int]()
 
     for (i, row) in map.pairs:
         if row.allIt(it == '.'):
-            emptyRows.add(i+emptyRows.len)
+            emptyRows.add(i + emptyRows.len)
 
     for x in 0 ..< map[0].len:
         if map.allIt(it[x] == '.'):
-            emptyCols.add(x+emptyCols.len)
+            emptyCols.add(x + emptyCols.len)
     
     return (emptyRows, emptyCols)
 
@@ -59,7 +65,13 @@ type
         x, y: int
 
 proc manhattanDistance(p1, p2: Point): int =
-    abs(p1.x - p2.x) + abs(p1.y - p2.y)
+    return abs(p1.x - p2.x) + abs(p1.y - p2.y)
+
+proc left(p1, p2: Point): bool =
+    return p1.x < p2.x
+
+proc above(p1, p2: Point): bool =
+    return p1.y < p2.y
 
 proc findGalaxies(map: seq[seq[char]]): seq[Point] =
     for y in 0 .. map.high:
@@ -90,51 +102,53 @@ proc partOne() =
     echo "Part one: ", sum
 
 proc partTwo() =
-    #let fn = "./input/day_11.txt"
-    let fn = TEST_INPUT
+    let fn = "./input/day_11.txt"
+    #let fn = TEST_INPUT
 
-    var galaxyMap = newSeq[seq[char]]()
+    var 
+        galaxyMap = newSeq[seq[char]]()
+        galaxyLocs = newSeq[Point]()
+        distSum = 0
+        emptyRows = newSeq[int]()
+        emptyCols = newSeq[int]()
 
     withStream(f, fn, fmRead):
         for line in lines(f):
             if line != "":
                 galaxyMap.add(line.toSeq())
 
-    var 
-        galaxyLocs = findGalaxies(galaxyMap)
-        sum = 0
+    galaxyLocs = findGalaxies(galaxyMap)
 
-    # now, if any galaxies have an empty row between them:
-    #   add num empty rows * 1000000 to the y distance between them
-    # if any galaxies have an empty col between them:
-    #   and add num empty cols * 1000000 to the x distance between them
-    let 
-        emptyRowCols = findEmptyRowsCols(galaxyMap)
-        emptyRows = emptyRowCols[0]
-        emptyCols = emptyRowCols[1]
+    for y in 0 .. galaxyMap.high:
+        if isEmptyRow(galaxyMap, y):
+            emptyRows.add(y)
+    for x in 0 .. galaxyMap[0].high:
+        if isEmptyCol(galaxyMap, x):
+            emptyCols.add(x)
 
     for i in 0 .. galaxyLocs.high:
-        var gp1 = galaxyLocs[i]
+        let gp1 = galaxyLocs[i]
         for j in i+1 .. galaxyLocs.high:
-            var gp2 = galaxyLocs[j]
+            let gp2 = galaxyLocs[j]
+            var 
+                numEmptyRows = 0
+                numEmptyCols = 0
+
             # count number of empty rows between galaxies
-            # multiply by 1000000 and add to gp2.y distance
-            var numEmptyRows = 0
-            for row in emptyRows:
-                if row in gp1.y .. gp2.y:
+            for row in countup(min(gp1.y, gp2.y), max(gp1.y, gp2.y)):
+                if row in emptyRows:
                     numEmptyRows += 1
-            gp2.y += (numEmptyRows * 10) #1000000)
             # count number of empty cols between galaxies
-            # multiply by 1000000 and add to gp2.x distance
-            var numEmptyCols = 0
-            for col in emptyCols:
-                if col in gp1.x .. gp2.x:
+            for col in countup(min(gp1.x, gp2.x), max(gp1.x, gp2.x)):
+                if col in emptyCols:
                     numEmptyCols += 1
-            gp2.x += (numEmptyCols * 10) #1000000)
-            sum += manhattanDistance(gp1, gp2)
+
+            let origDist = manhattanDistance(gp1, gp2)
+            let distModif = 999999
+            distSum += (origDist + (numEmptyRows*distModif) + (numEmptyCols*distModif))
     
-    echo "Part two: ", sum
+    echo "Part two: ", distSum
 
 when isMainModule:
-    #partOne()
+    partOne()
     partTwo()
