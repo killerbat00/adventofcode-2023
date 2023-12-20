@@ -31,6 +31,24 @@ task runDay, &"compiles and runs a day's code":
     else:
         echo "usage: nim runDay <day number>"
 
+task runDayMacFast, "compiles and runs a day's code mac native":
+    params.excl("runDayMacFast")
+    if params.len == 1:
+        let dayNum = params.pop().parseInt()
+        --forceBuild:on
+        --cc:clang
+        --define:debug
+        --deepcopy:on
+        --cpu:arm64
+        --passC:"-flto -target arm64-apple-macos11" 
+        --passL:"-flto -target arm64-apple-macos11"
+        --hints:off
+        --outdir:"bin/"
+        --run
+        setCommand "c", &"day_{dayNum}.nim"
+    else:
+        echo "usage: nim runDayMacFast <day number>"
+
 task clean, "clean build artifacts":
     if dirExists(binDir):
         rmdir(binDir)
