@@ -3,11 +3,6 @@ from streams import lines
 
 import strutils
 import sequtils
-import sugar
-import algorithm
-import bitops
-import threadpool
-import deques
 import tables
 import system
 import strformat
@@ -20,34 +15,6 @@ const TEST_INPUT = """
 ????.######..#####. 1,6,5
 ?###???????? 3,2,1
 """
-
-iterator combos(n: int): seq[char] =
-    # there are 2^n combinations
-    # and 2 options, so use
-    # binary rep of each number up to 2^n
-    # to generate the combos
-    let totalCombos = 1 shl n
-    for i in 0 ..< totalCombos:
-        var combo = newSeq[char]()
-        for j in 0 ..< n:
-            if bitand(i, 1 shl (n - j - 1)) != 0:
-                combo.add('#')
-            else:
-                combo.add('.')
-        yield combo
-
-proc replaceFromChoice(line: string, choice: seq[char]): string =
-    var
-        r = line.toSeq()
-        i = 0
-
-    for li, l in r.mpairs:
-        if l == '?':
-            r[li] = choice[i]
-            inc i
-        else:
-            r[li] = l
-    return r.join
 
 var cache = newTable[string, TableRef[seq[int], int]]()
 proc countValidSolutions(line: string, spans: seq[int]): int =
